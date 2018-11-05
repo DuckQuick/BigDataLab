@@ -19,7 +19,11 @@
 
 **❤总的来说，机器视觉侧重对量的分析，计算机视觉侧重对质的分析❤**
 
-#OpenMV Cam介绍
+#OpenMV Cam
+## OpenMV Cam简介
+
+
+## OpenMV Cam M7 - OV7725
 ![Openmv Cam M7 - OV7725 (1)]
 
 [Openmv Cam M7 - OV7725 (1)]: images/Openmv-Cam-M7---OV7725-(1).png "Openmv Cam M7 - OV7725 (1)" { width:auto; max-width:90% }
@@ -43,6 +47,8 @@
 
 #实现人脸识别追踪 
 
+
+#附录
 ####英文注解：
 1. Machine Vision（MV）：机器视觉
 2. Computer Vision（CV）：计算机视觉
