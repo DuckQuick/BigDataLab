@@ -1,0 +1,67 @@
+
+
+#机器视觉与计算机视觉
+##机器视觉（Machine Vision, MV）
+**机器视觉**是指用计算机来实现人的视觉功能，也就是用计算机来实现对客观的三维世界的识别。
+
+##计算机视觉(Computer Vision, CV）
+**计算机视觉**是指用摄影机和计算机代替人眼对目标进行识别、跟踪和测量等机器视觉，并进一步做图像处理，用计算机处理成为更适合人眼观察或传送给仪器检测的图像
+
+##MV与CV的区别
+**计算机视觉**的研究对象主要是**映射到单幅或多幅图像上的三维场景**，例如三维场景的重建。
+
+**机器视觉**主要是指**工业领域的视觉研究**，例如自主机器人的视觉，用于检测和测量的视觉。
+![Vision]
+
+[Vision]: images/Vision.png "Vision" { width:auto; max-width:90% }
+
+
+
+**❤总的来说，机器视觉侧重对量的分析，计算机视觉侧重对质的分析❤**
+
+#OpenMV Cam介绍
+![Openmv Cam M7 - OV7725 (1)]
+
+[Openmv Cam M7 - OV7725 (1)]: images/Openmv-Cam-M7---OV7725-(1).png "Openmv Cam M7 - OV7725 (1)" { width:auto; max-width:90% }
+
+|---------|-------------|
+| Tables  | OpenMV3(M7) |
++---------|:-----------:+
+| Pin     | 10          |
+| ADC/DAC | 1           |
+| SPI     | 1           |
+| I2C     | 2           |
+| UART    | 1           |
+| Servo   | 3           |
+| CAN bus | 1           |
+| IC      | STM32F765   |
+| RAM     | 512KB       |
+| Flash   | 2MB         |
+|Frequency| 216MHz      |
+|---------|-------------|
+
+
+#实现人脸识别追踪 
+
+####英文注解：
+1. Machine Vision（MV）：机器视觉
+2. Computer Vision（CV）：计算机视觉
+3. Cam（Camera）：摄像头
+4. OV7725：感光元件型号
+5. Pin：I/O引脚（Input / Output）
+6. ADC（Analog-to-digital converter）：模拟数字转换器
+7. DAC（Digital to analog converter）：数字模拟转换器
+8. SPI（Serial Peripheral Interface Bus）：串行外设接口
+9. I2C（Inter-Integrated Circuit）：集成电路总线
+10. UART（Universal Asynchronous Receiver/Transmitter）：异步串行通信口
+11. Servo：这里指的是舵机
+12. CAN bus（Controller Area Network）：控制器局域网
+13. IC（Integrated Circuit）：集成电路，这里指微芯片，即STM32F765VI ARM CortexM7处理器
+14. RAM（Random Access Memory）：随机存取存储器，也叫主存
+15. Flash（Flash Memory）：快闪存储器，也叫闪存
+16. Frequency：频率
+
+
+
+
+
