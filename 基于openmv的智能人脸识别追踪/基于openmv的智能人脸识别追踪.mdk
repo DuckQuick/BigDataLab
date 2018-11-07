@@ -17,16 +17,25 @@
 
 
 
-**❤总的来说，机器视觉侧重对量的分析，计算机视觉侧重对质的分析❤**
+_**总的来说，机器视觉侧重对量的分析，计算机视觉侧重对质的分析。**_
 
 #OpenMV Cam
 ## OpenMV Cam简介
+**OpenMV Cam**是一款低价，可扩展，支持**Python**的**机器视觉模块**，这个模块的目标是成为**“机器视觉世界的Arduino”**。
+OpenMV搭载**MicroPython解释器**，这允许你在嵌入式上使用**Python**来编程。
 
+![OpenMV Cam]
+
+[OpenMV Cam]: images/OpenMV-Cam.png "OpenMV Cam" { width:auto; max-width:90% }
 
 ## OpenMV Cam M7 - OV7725
+**OpenMV3 Cam M7**是目前**OpenMV系列**性能最优秀的版本。
+
 ![Openmv Cam M7 - OV7725 (1)]
 
 [Openmv Cam M7 - OV7725 (1)]: images/Openmv-Cam-M7---OV7725-(1).png "Openmv Cam M7 - OV7725 (1)" { width:auto; max-width:90% }
+
+**参数表：**
 
 |---------|-------------|
 | Tables  | OpenMV3(M7) |
