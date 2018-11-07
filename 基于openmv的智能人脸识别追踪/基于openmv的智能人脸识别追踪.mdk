@@ -1,13 +1,29 @@
 
+#前言
 
-#机器视觉与计算机视觉
-##机器视觉（Machine Vision, MV）
+# 环境配置
+
+操作系统：联想(Lenovo)笔记本电脑(i7-7700HQ) Windows 10 64位 家庭中文版
+
+语言：python3
+
+库：OpenMV库（包括sensor、image、pyb、pid）、micropython库
+
+软件：OpenMV IDE用于OpenMV Cam的代码编写、编译、调节、图像绘制等等功能
+
+硬件：OpenMV Cam M7 - OV7725 、焦距为2.8mm的摄像头、 3D打印舵机 、 3.7V 1000mAh锂电池 、 USB数据线
+
+# 原理简述
+
+##机器视觉与计算机视觉
+
+###机器视觉（Machine Vision, MV）
 **机器视觉**是指用计算机来实现人的视觉功能，也就是用计算机来实现对客观的三维世界的识别。
 
-##计算机视觉(Computer Vision, CV）
+###计算机视觉(Computer Vision, CV）
 **计算机视觉**是指用摄影机和计算机代替人眼对目标进行识别、跟踪和测量等机器视觉，并进一步做图像处理，用计算机处理成为更适合人眼观察或传送给仪器检测的图像。
 
-##MV与CV的区别
+###MV与CV的区别
 **计算机视觉**的研究对象主要是**映射到单幅或多幅图像上的三维场景**，例如三维场景的重建。
 
 **机器视觉**主要是指**工业领域的视觉研究**，例如自主机器人的视觉，用于检测和测量的视觉。
@@ -17,8 +33,8 @@
 
 _**总的来说，机器视觉侧重对量的分析，计算机视觉侧重对质的分析。**_
 
-#OpenMV Cam
-## OpenMV Cam简介
+##OpenMV Cam
+### OpenMV Cam简介
 **OpenMV Cam**是一款低价，可扩展，支持**Python**的**机器视觉模块**，这个模块的目标是成为**“机器视觉世界的Arduino”**。
 OpenMV搭载**MicroPython解释器**，这允许你在嵌入式上使用**Python**来编程。
 
@@ -26,7 +42,7 @@ OpenMV搭载**MicroPython解释器**，这允许你在嵌入式上使用**Python
 
 [OpenMV Cam]: images/OpenMV-Cam.png "OpenMV Cam" { width:auto; max-width:90% }
 
-##OpenMV Cam应用
+###OpenMV Cam应用
 **常用的有颜色识别、形状识别、二维码识别、人脸识别、边缘检测、特征点追踪等等。**
 ![functions]
 
@@ -39,7 +55,7 @@ OpenMV搭载**MicroPython解释器**，这允许你在嵌入式上使用**Python
 [Rubik's cube robot]: images/Rubik-s-cube-robot.jpg "Rubik's cube robot" { width:auto; max-width:90% }
 
 
-##OpenMV Cam的优点与不足
+###OpenMV Cam的优点与不足
 优点：
 
 1. 支持Python语法，即Micropython库，即可用python写实现功能的代码。
@@ -53,7 +69,7 @@ OpenMV搭载**MicroPython解释器**，这允许你在嵌入式上使用**Python
 3. 价格对于学生来说偏贵。
 
 
-## OpenMV Cam M7 - OV7725
+### OpenMV Cam M7 - OV7725
 **OpenMV3 Cam M7**是目前**OpenMV系列**性能最优秀的版本。
 
 ![Openmv Cam M7 - OV7725 (1)]
@@ -78,29 +94,36 @@ OpenMV搭载**MicroPython解释器**，这允许你在嵌入式上使用**Python
 |Frequency| 216MHz      |
 |---------|-------------|
 
-#实现人脸识别
+# 项目各功能描述
+
+##实现人脸识别
+
 因为OpenMV Cam自有特定的库，比如sensor感光元件库、image机器视觉库等等，所以能很方便的调用来实现所需功能，但却不支持numpy等等较大的库。
 
-首先，这里为了匹配了摄像头的参数而对感光元件进行必要的设置，比如对比度、相机帧大小、像素模式（灰度图、RGB565彩色图）等等。
+``` python
+  import sensor, image
+```
 
+首先，初始化感光元件，这里为了匹配了摄像头的参数而对感光元件进行必要的设置，比如对比度、相机帧大小、像素模式（灰度图、RGB565彩色图）等等。
+``` python
+  sensor.reset()
+  sensor.set_contrast(1) #对比度
+  sensor.set_gainceiling(16) #图像增益上限
+  sensor.set_framesize(sensor.HQVGA) #相机帧大小
+  sensor.set_pixformat(sensor.GRAYSCALE) #像素模式
+```
 其次，加载haar人脸识别算法。
-
+``` python
+  face_cascade = image.HaarCascade("frontalface", stages=25) #加载人脸模型
+```
 最后，拍照，通过照片进行特征分析，如果分析到人脸则在IDE里的帧缓冲图像区画出匹配的方框。
 
 ``` python
-import sensor, image
-sensor.reset()
-sensor.set_contrast(1) #对比度
-sensor.set_gainceiling(16) #图像增益上限
-sensor.set_framesize(sensor.HQVGA) #相机帧大小
-sensor.set_pixformat(sensor.GRAYSCALE) #像素模式
-face_cascade = image.HaarCascade("frontalface", stages=25) #加载人脸模型
-print(face_cascade)
-while (True):
-    img = sensor.snapshot() #拍照
-    objects = img.find_features(face_cascade, threshold=0.75, scale_factor=1.25) #寻找特征点，匹配人脸
-    for r in objects:
-        img.draw_rectangle(r) #画方框
+  while (True):
+      img = sensor.snapshot() #拍照
+      objects = img.find_features(face_cascade, threshold=0.75, scale_factor=1.25) #寻找特征点，匹配人脸
+      for r in objects:
+          img.draw_rectangle(r) #画方框
 ```
 例图：
 
@@ -108,11 +131,37 @@ while (True):
 
 [0-pic]: images/0-pic.png "0-pic" { width:auto; max-width:90% }
 
-#实现人脸识别追踪 
+##实现人脸识别追踪 
 
+#源码
 
-#附录
-####英文注解：
+## 人脸识别代码
+```python
+  import sensor, image
+
+  sensor.reset()
+  
+  sensor.set_contrast(1)
+  sensor.set_gainceiling(16)
+  sensor.set_framesize(sensor.HQVGA)
+  sensor.set_pixformat(sensor.GRAYSCALE)
+  
+  face_cascade = image.HaarCascade("frontalface", stages=25)
+  
+  while (True):
+  
+      img = sensor.snapshot()
+  
+      objects = img.find_features(face_cascade, threshold=0.75, scale_factor=1.25)
+  
+      for r in objects:
+          img.draw_rectangle(r)
+```
+
+#结语及展望
+
+#参考资料
+##英文注解：
 1. Machine Vision（MV）：机器视觉
 2. Computer Vision（CV）：计算机视觉
 3. Cam（Camera）：摄像头
