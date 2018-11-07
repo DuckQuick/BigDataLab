@@ -5,7 +5,7 @@
 **机器视觉**是指用计算机来实现人的视觉功能，也就是用计算机来实现对客观的三维世界的识别。
 
 ##计算机视觉(Computer Vision, CV）
-**计算机视觉**是指用摄影机和计算机代替人眼对目标进行识别、跟踪和测量等机器视觉，并进一步做图像处理，用计算机处理成为更适合人眼观察或传送给仪器检测的图像
+**计算机视觉**是指用摄影机和计算机代替人眼对目标进行识别、跟踪和测量等机器视觉，并进一步做图像处理，用计算机处理成为更适合人眼观察或传送给仪器检测的图像。
 
 ##MV与CV的区别
 **计算机视觉**的研究对象主要是**映射到单幅或多幅图像上的三维场景**，例如三维场景的重建。
@@ -14,8 +14,6 @@
 ![Vision]
 
 [Vision]: images/Vision.png "Vision" { width:auto; max-width:90% }
-
-
 
 _**总的来说，机器视觉侧重对量的分析，计算机视觉侧重对质的分析。**_
 
@@ -27,6 +25,33 @@ OpenMV搭载**MicroPython解释器**，这允许你在嵌入式上使用**Python
 ![OpenMV Cam]
 
 [OpenMV Cam]: images/OpenMV-Cam.png "OpenMV Cam" { width:auto; max-width:90% }
+
+##OpenMV Cam应用
+**常用的有颜色识别、形状识别、二维码识别、人脸识别、边缘检测、特征点追踪等等。**
+![functions]
+
+[functions]: images/functions.png "functions" { width:auto; max-width:90% }
+
+**解魔方机器人：**
+
+![Rubik's cube robot]
+
+[Rubik's cube robot]: images/Rubik-s-cube-robot.jpg "Rubik's cube robot" { width:auto; max-width:90% }
+
+
+##OpenMV Cam的优点与不足
+优点：
+
+1. 支持Python语法，即Micropython库，即可用python写实现功能的代码。
+2. 板子自带解释器且官方自带IDE，编写代码、调试方便。
+3. 可以完全控制OpenMV，包括IO引脚。
+
+不足：
+
+1. 内置RAM小，不足以同时处理多张图片。
+2. OV7725感光元件最多处理640×480 RGB565彩色图像。
+3. 价格对于学生来说偏贵。
+
 
 ## OpenMV Cam M7 - OV7725
 **OpenMV3 Cam M7**是目前**OpenMV系列**性能最优秀的版本。
@@ -53,6 +78,35 @@ OpenMV搭载**MicroPython解释器**，这允许你在嵌入式上使用**Python
 |Frequency| 216MHz      |
 |---------|-------------|
 
+#实现人脸识别
+因为OpenMV Cam自有特定的库，比如sensor感光元件库、image机器视觉库等等，所以能很方便的调用来实现所需功能，但却不支持numpy等等较大的库。
+
+首先，这里为了匹配了摄像头的参数而对感光元件进行必要的设置，比如对比度、相机帧大小、像素模式（灰度图、RGB565彩色图）等等。
+
+其次，加载haar人脸识别算法。
+
+最后，拍照，通过照片进行特征分析，如果分析到人脸则在IDE里的帧缓冲图像区画出匹配的方框。
+
+``` python
+import sensor, image
+sensor.reset()
+sensor.set_contrast(1) #对比度
+sensor.set_gainceiling(16) #图像增益上限
+sensor.set_framesize(sensor.HQVGA) #相机帧大小
+sensor.set_pixformat(sensor.GRAYSCALE) #像素模式
+face_cascade = image.HaarCascade("frontalface", stages=25) #加载人脸模型
+print(face_cascade)
+while (True):
+    img = sensor.snapshot() #拍照
+    objects = img.find_features(face_cascade, threshold=0.75, scale_factor=1.25) #寻找特征点，匹配人脸
+    for r in objects:
+        img.draw_rectangle(r) #画方框
+```
+例图：
+
+![0-pic]
+
+[0-pic]: images/0-pic.png "0-pic" { width:auto; max-width:90% }
 
 #实现人脸识别追踪 
 
