@@ -1,5 +1,6 @@
 
 #前言
+本次讲课题目为“基于OpenMV的智能人脸识别追踪”，引入“机器视觉”、“计算机视觉”概念，简要介绍OpenMV和Haar算法，并在此基础上实现人脸识别追踪等等功能。
 
 # 环境配置
 
@@ -96,40 +97,51 @@ OpenMV搭载**MicroPython解释器**，这允许你在嵌入式上使用**Python
 
 ## 人脸识别算法
 
-###Haar特征
+###Haar-like特征
 
 **哈尔特征** 是用于物体识别的一种数字图像特征。它们因为与哈尔小波转换极为相似而得名，**是第一种即时的人脸检测运算**。
 
-哈尔特征使用**检测窗口中指定位置的相邻矩形，计算每一个矩形的像素和并取其差值**。然后用这些差值来对图像的子区域进行分类。
-
 哈尔特征最主要的优势是**它的计算非常快速**。使用一个称为**积分图**的结构，任意尺寸的哈尔特征可以在常数时间内进行计算。
 
+**积分图**是（Integral Image）类似动态规划的方法，主要的思想是将图像从起点开始到各个点所形成的矩形区域像素之存在数组中，当要计算某个区域的像素和时可以直接从数组中索引，不需要重新计算这个区域的像素和，从而加快了计算。 
 
-![积分图]
+![integral image]
 
-[积分图]: images/-.jpg "积分图" { width:auto; max-width:90% }
-
+[integral image]: images/integral-image.jpg "integral image" { width:auto; max-width:90% }
 
 **
 如图所示的一个m*m大小的子窗口，可以计算在这么大的子窗口内存在多少个矩形特征。
 **
 
-**
-特征范围(x2-x1,y2-y1)由左上角点A与右下角点B确定，即两个(x,y)不同的点确定了一个矩形。
-**
+![rectangle]
 
-![窗口矩形]
+[rectangle]: images/rectangle.JPG "rectangle" { width:auto; max-width:90% }
 
-[窗口矩形]: images/-.JPG "窗口矩形" { width:auto; max-width:90% }
+**矩形范围(x2-x1,y2-y1)**由左上角点A与右下角点B确定，即两个(x,y)不同的点确定了一个矩形。
+
+**如何计算特征值？**
+
+![integral image2]
+
+[integral image2]: images/integral-image2.jpg "integral image2" { width:auto; max-width:90% }
 
 
+哈尔特征使用**检测窗口中指定位置的相邻矩形，计算每一个矩形的像素和并取其差值**。**其差值即为特征值**。然后用这些差值来对图像的子区域进行分类。
 
-**图中两个矩形特征，表示出人脸的某些特征。**
+1. 先计算像素值，即计算点6与(1,1)构成的矩形的像素值为 D6(x6-1,y6-1) ，其它的点分别为 D1、D2等等。
 
-![haar人脸]
+  此**矩形B的像素值** 即为**矩形范围B的像素之和Sum_B = D6 + D2 - D3 - D5**
 
-[haar人脸]: images/haar-.JPG "haar人脸" { width:auto; max-width:90% }
+  同理得**矩形A的像素值为Sum_A = D5 + D1 - D2 - D4**
+2. B的特征值即为 **Sum_A - Sum_B**
 
+**所以，矩形特征的特征值只与特征矩形端点的积分图有关，而与图像的坐标无关。**
+
+下图中两个矩形特征，表示出人脸的某些特征。
+
+![haar-face]
+
+[haar-face]: images/haar-face.JPG "haar-face" { width:auto; max-width:90% }
 
 比如中间一幅表示**眼睛区域的颜色比脸颊区域的颜色深**，右边一幅表示**鼻梁两侧比鼻梁的颜色要深**。同样，其他目标，如眼睛等，也可以用一些矩形特征来表示。
 
@@ -137,16 +149,17 @@ OpenMV搭载**MicroPython解释器**，这允许你在嵌入式上使用**Python
 
 ### 决策树
 
-决策树是一个树结构（可以是二叉树或非二叉树）。其每个非叶节点表示一个特征属性上的测试，每个分支代表这个特征属性在某个值域上的输出，而每个叶节点存放一个类别。
+决策树是一个**树结构**（可以是二叉树或非二叉树）。其每个非叶节点表示一个特征属性上的测试，每个分支代表这个特征属性在某个值域上的输出，而每个叶节点存放一个类别。
 
-![特征决策树]
+![decision tree]
 
+[decision tree]: images/decision-tree.jpg "decision tree" { width:auto; max-width:90% }
 
 # 项目各功能描述
 
 ##实现人脸识别
 
-因为OpenMV Cam自有特定的库，比如sensor感光元件库、image机器视觉库等等，所以能很方便的调用来实现所需功能，但却不支持numpy等等较大的库。
+因为OpenMV Cam自有特定的库，比如sensor感光元件库、image机器视觉库等等，所以能很方便的调用来实现所需功能，但记住OpenMV Cam因为容量问题不支持numpy等等较大的库。
 
 ``` python
   import sensor, image
@@ -157,7 +170,7 @@ OpenMV搭载**MicroPython解释器**，这允许你在嵌入式上使用**Python
   sensor.reset()
   sensor.set_contrast(1) #对比度
   sensor.set_gainceiling(16) #图像增益上限
-  sensor.set_framesize(sensor.HQVGA) #相机帧大小
+  sensor.set_framesize(sensor.HQVGA) #相机帧大小（分辨率），HQVGA即240x160像素
   sensor.set_pixformat(sensor.GRAYSCALE) #像素模式
 ```
 其次，加载haar人脸识别算法。
@@ -179,37 +192,215 @@ OpenMV搭载**MicroPython解释器**，这允许你在嵌入式上使用**Python
 
 [0-pic]: images/0-pic.png "0-pic" { width:auto; max-width:90% }
 
-##实现人脸识别追踪 
+##实现人脸识别分辨追踪 
 
+因为"世界上没有一模一样的树叶"，故每个人的人脸也是不一样的。
+
+人脸分辨需要的是在图片中搜寻特征关键点，与匹配人物的特征点进行对比匹配，如果相同的特征点数量超过一定数目，则可以认定是同一个人脸。
+
+我们在人脸识别追踪的代码上进行修改补充。
+
+首先，使用的库不变，设置阈值，并改变相机帧大小。
+```python
+    Threshold = 0.5 #数值越大匹配速度越快但错误率上升
+    sensor.set_framesize(sensor.VGA) #设置相机的帧大小
+                                      #VGA为640x480像素
+    sensor.set_windowing((320,240)) #选取中间区域，防止内存爆满。
+```
+设置完后需要稳定摄像头。
+```python
+    sensor.skip_frames(time = 2000) #跳过2000毫秒的帧
+```
+然后，进行匹配人物特征点的获取。
+```python
+      Face1 = None
+      while(Face1 == None):
+          img = sensor.snapshot()
+          objects = img.find_features(FaceCascade,threshold = Threshold,scale = 1.25)
+          #寻找与Haar Cascade匹配的图像区域。scale越大，比例因子运行更快，但图像匹配较差。此函数返回列表(x,y,w,h)
+          if objects:
+              face = (objects[0][0] - 31,objects[0][1] - 31,objects[0][2] + 31 * 2,objects[0][3] + 31 * 2)
+              #使用检测区域大小作为ROI提取关键点
+              Face1 = img.find_keypoints(threshold = 10,scale_factor = 1.1,max_keypoints = 100,roi = face)
+              #从ROI元组face(x,y,w,h)中提取ORB键点。max_keypoints为一个键点对象的最大键点数量
+```
+最后，进行匹配。如果匹配特征点大于5则匹配成功。
+```python
+    while(True):
+        img = sensor.snapshot()
+        Face2 = img.find_keypoints(threshold = 10, scale_factor = 1.1, max_keypoints = 100, normalized = True)
+        #normalized为布尔值,若为True,在多分辨率下关闭提取键点。设为False则算法运行更快。
+        if Face2:
+            ImgMatch = image.match_descriptor(Face1,Face2,threshold = 85)
+            #返回Kptmatch特征点对象
+            ImgMatchNum = ImgMatch[6]
+            if ImgMatchNum > 5:
+                img.draw_rectangle(ImgMatch[2:6])
+                img.draw_cross(ImgMatch[0],ImgMatch[1],size = 10)
+                print(Face2,"matched:dt:%d"%(ImgMatch[7]))
+```
+## 实现带舵机的人脸识别追踪
+增加了舵机，便可真正实现追踪效果。
+主要是增加了舵机模块。
+```python
+    import pyb,pid #板级功能,舵机库
+    
+    PanServo = pyb.Servo(1) #舵机 IO口接P7
+    TiltServo = pyb.Servo(2) #P8
+```
+设置舵机灵敏度等参数
+```python
+    PanPid = pid.PID(p=0.11, i=0, imax=90) #p为反应速度，i为稳差
+    TiltPid = pid.PID(p=0.11, i=0, imax=90)
+```
+因为在舵机上接上摄像头后图像在IDE调试时是反着的，故需调节。
+```python
+    sensor.set_vflip(True) #图像垂直方向翻转
+```
+最后当人脸匹配成功时进行舵机运动。注意的是因为图像垂直翻转过，则舵机垂直运动与水平运动函数不一样。
+```python
+    PanError = ImgMatch.cx() - img.width() / 2
+    TiltError = img.height() / 2 - ImgMatch.cy()
+    PanOutput = PanPid.get_pid(PanError,1)
+    TiltOutput = TiltPid.get_pid(TiltError,1)
+    PanServo.angle(PanServo.angle() + PanOutput)
+    TiltServo.angle(TiltServo.angle() - TiltOutput)
+```
 #源码
 
-## 人脸识别代码
+## 人脸识别追踪
 ```python
-  import sensor, image
+    import sensor, image
+  
+    sensor.reset()
+    
+    sensor.set_contrast(1)
+    sensor.set_gainceiling(16)
+    sensor.set_framesize(sensor.HQVGA)
+    sensor.set_pixformat(sensor.GRAYSCALE)
+    
+    face_cascade = image.HaarCascade("frontalface", stages=25)
+    
+    while (True):
+    
+        img = sensor.snapshot()
+    
+        objects = img.find_features(face_cascade, threshold=0.75, scale_factor=1.25)
+    
+        for r in objects:
+            img.draw_rectangle(r)
+```
 
-  sensor.reset()
-  
-  sensor.set_contrast(1)
-  sensor.set_gainceiling(16)
-  sensor.set_framesize(sensor.HQVGA)
-  sensor.set_pixformat(sensor.GRAYSCALE)
-  
-  face_cascade = image.HaarCascade("frontalface", stages=25)
-  
-  while (True):
-  
-      img = sensor.snapshot()
-  
-      objects = img.find_features(face_cascade, threshold=0.75, scale_factor=1.25)
-  
-      for r in objects:
-          img.draw_rectangle(r)
+## 人脸识别分辨追踪
+```python
+    import sensor,image #传感器(摄像头),机器视觉库
+    
+    Threshold = 0.5 #阈值,数值越大匹配速度越快但错误率上升
+    
+    sensor.reset()
+    
+    sensor.set_contrast(1) #设置对比度
+    sensor.set_gainceiling(16) #设置相机图像增益上限
+    sensor.set_framesize(sensor.VGA) #设置相机的帧大小
+                                      #VGA为640x480像素
+    sensor.set_windowing((320,240)) #选取中间区域，防止内存爆满
+    sensor.set_pixformat(sensor.GRAYSCALE) #设置相机的像素模式
+                                          #GRAYSCALE为灰度图,8位比特每像素
+    sensor.skip_frames(time = 2000) #跳过2000毫秒的帧
+    FaceCascade = image.HaarCascade("frontalface",stages = 25)
+    #加载haar人脸模型,stages为Haar Cascade中的阶段数。此函数返回Haar Cascade对象
+    Face1 = None
+    while(Face1 == None):
+        img = sensor.snapshot()
+        objects = img.find_features(FaceCascade,threshold = Threshold,scale = 1.25)
+        #寻找与Haar Cascade匹配的图像区域。scale越大，比例因子运行更快，但图像匹配较差。此函数返回列表(x,y,w,h)
+        if objects:
+            face = (objects[0][0] - 31,objects[0][1] - 31,objects[0][2] + 31 * 2,objects[0][3] + 31 * 2)
+            #使用检测区域大小作为ROI提取关键点
+            Face1 = img.find_keypoints(threshold = 10,scale_factor = 1.1,max_keypoints = 100,roi = face)
+            #从ROI元组face(x,y,w,h)中提取ORB键点。max_keypoints为一个键点对象的最大键点数量
+            img.draw_rectangle(objects[0])
+    
+    img.draw_keypoints(Face1,size = 24)
+    img = sensor.snapshot()
+    
+    while(True):
+        img = sensor.snapshot()
+        Face2 = img.find_keypoints(threshold = 10, scale_factor = 1.1, max_keypoints = 100, normalized = True)
+        #normalized为布尔值,若为True,在多分辨率下关闭提取键点。设为False则算法运行更快。
+        if Face2:
+            ImgMatch = image.match_descriptor(Face1,Face2,threshold = 85)
+            #返回Kptmatch特征点对象
+            ImgMatchNum = ImgMatch[6]
+            if ImgMatchNum > 5:
+                img.draw_rectangle(ImgMatch[2:6])
+                img.draw_cross(ImgMatch[0],ImgMatch[1],size = 10)
+                print(Face2,"matched:dt:%d"%(ImgMatch[7]))
+```
+## 带舵机的人脸识别追踪
+```python
+    import sensor,pyb,image,pid #传感器(摄像头),板级功能,机器视觉,舵机库
+    
+    PanServo = pyb.Servo(1) #舵机 IO口接P7
+    TiltServo = pyb.Servo(2) #P8
+    
+    Threshold = 0.5 #阈值,数值越大匹配速度越快但错误率上升
+    
+    PanPid = pid.PID(p=0.11, i=0, imax=90)#在线调试使用这个PID
+    TiltPid = pid.PID(p=0.11, i=0, imax=90)#在线调试使用这个PID
+    
+    sensor.reset()
+    
+    sensor.set_contrast(1) #设置对比度
+    sensor.set_gainceiling(16) #设置相机图像增益上限
+    sensor.set_framesize(sensor.QVGA) #设置相机的帧大小
+                                      #VGA为640x480像素
+                                      #QQVAG为320×240像素
+                                      #QQVAG为160×120像素
+    #sensor.set_windowing((320,240)) #选取中间区域，防止内存爆满
+    sensor.set_pixformat(sensor.GRAYSCALE) #设置相机的像素模式
+                                          #GRAYSCALE为灰度图,8位比特每像素
+    sensor.set_vflip(True) #图像垂直方向翻转
+    sensor.skip_frames(time = 2000) #跳过2000毫秒的帧
+    FaceCascade = image.HaarCascade("frontalface",stages = 25)
+    #加载haar人脸模型,stages为Haar Cascade中的阶段数。此函数返回Haar Cascade对象
+    Face1 = None
+    while(Face1 == None):
+        img = sensor.snapshot()
+        objects = img.find_features(FaceCascade,threshold = Threshold,scale = 1.25)
+        #寻找与Haar Cascade匹配的图像区域。scale越大，比例因子运行更快，但图像匹配较差。此函数返回列表(x,y,w,h)
+        if objects:
+            face = (objects[0][0] - 31,objects[0][1] - 31,objects[0][2] + 31 * 2,objects[0][3] + 31 * 2)
+            #使用检测区域大小作为ROI提取关键点
+            Face1 = img.find_keypoints(threshold = 10,scale_factor = 1.1,max_keypoints = 100,roi = face)
+            #从ROI元组face(x,y,w,h)中提取ORB键点。max_keypoints为一个键点对象的最大键点数量
+    
+    while(True):
+        img = sensor.snapshot()
+        Face2 = img.find_keypoints(threshold = 10, scale_factor = 1.1, max_keypoints = 100, normalized = True)
+        #normalized为布尔值,若为True,在多分辨率下关闭提取键点。设为False则算法运行更快。
+        if Face2:
+            ImgMatch = image.match_descriptor(Face1,Face2,threshold = 85)
+            #返回Kptmatch特征点对象
+            ImgMatchNum = ImgMatch[6]
+            if ImgMatchNum > 5:
+                img.draw_rectangle((ImgMatch.x(),ImgMatch.y(),ImgMatch.w(),ImgMatch.h()))
+                img.draw_cross((int(ImgMatch.cx()),int(ImgMatch.cy())),size = 10)
+    
+                PanError = ImgMatch.cx() - img.width() / 2
+                TiltError = img.height() / 2 - ImgMatch.cy()
+                PanOutput = PanPid.get_pid(PanError,1)
+                TiltOutput = TiltPid.get_pid(TiltError,1)
+                PanServo.angle(PanServo.angle() + PanOutput)
+                TiltServo.angle(TiltServo.angle() - TiltOutput)
+                print(ImgMatch.cx(),ImgMatch.cy())
 ```
 
 #结语及展望
 
-#参考资料
-##英文注解：
+
+# 参考资料
+## 英文注解：
 1. Machine Vision（MV）：机器视觉
 2. Computer Vision（CV）：计算机视觉
 3. Cam（Camera）：摄像头
@@ -227,7 +418,12 @@ OpenMV搭载**MicroPython解释器**，这允许你在嵌入式上使用**Python
 15. Flash（Flash Memory）：快闪存储器，也叫闪存
 16. Frequency：频率
 
+## 参考文献：
+1. OpenMV Cam官方手册
+2. Micropython 中文教程 V2.0
+3. 哈尔特征 - 维基百科
 
+因参考文献过多，此处不再列举。
 
 
 
