@@ -4,3 +4,4 @@ Arduino
 加载haar人脸识别算法。
 英文注解
 人脸识别代码
+包括sensor、image、pyb、pid

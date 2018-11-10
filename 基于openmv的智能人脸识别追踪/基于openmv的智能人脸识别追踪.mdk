@@ -422,8 +422,9 @@ OpenMV搭载**MicroPython解释器**，这允许你在嵌入式上使用**Python
 1. OpenMV Cam官方手册
 2. Micropython 中文教程 V2.0
 3. 哈尔特征 - 维基百科
+4. OV7725 Color CMOS VGA (640x480) CAMERACHIPTM SensorOmniision®with OmniPixel2TM Technology
 
-因参考文献过多，此处不再列举。
+  因参考文献过多，此处不再列举。
 
 
 
